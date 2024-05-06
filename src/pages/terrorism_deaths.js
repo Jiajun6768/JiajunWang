@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import * as d3 from "d3";
 import * as topojson from "topojson";
 
@@ -7,16 +7,23 @@ function App() {
   const [rawData, setRawData] = useState([]);
   const [countries, setCountries] = useState([]);
   const [gdpData, setGdpData] = useState([]);
-
+  const tooltipRef = useRef(null);
   const width = 600;
   const height = 400;
 
   // 创建提示工具
-  const tooltip = d3
-    .select("body")
-    .append("div")
-    .attr("class", "tooltip")
-    .style("opacity", 0);
+  useEffect(() => {
+    // 创建 tooltip，并存储到 ref 中
+    tooltipRef.current = d3.select("body")
+      .append("div")
+      .attr("class", "tooltip")
+      .style("opacity", 0);
+
+    return () => {
+      // 组件卸载时，移除 tooltip
+      tooltipRef.current.remove();
+    };
+  }, []);
 
   const renderMap = (features, rawData, year, gdpData) => {
     const svgMap = d3.select("#map");
@@ -58,6 +65,7 @@ function App() {
         });
         const count = (item || {})["Terrorism deaths"];
         d3.select(this).attr("opacity", 1).attr("stroke-width", 2);
+        const tooltip = tooltipRef.current;
         tooltip
           .style("opacity", 1)
           .html(
@@ -78,6 +86,7 @@ function App() {
         });
         const count = (item || {})["Terrorism deaths"];
         d3.select(this).attr("opacity", 1).attr("stroke-width", 2);
+        const tooltip = tooltipRef.current;
         tooltip
           .style("opacity", 1)
           .html(
@@ -92,6 +101,7 @@ function App() {
       })
       .on("mouseout", function (event, d) {
         d3.selectAll(".country").attr("opacity", 1).attr("stroke-width", 0.1);
+        const tooltip = tooltipRef.current;
         tooltip.style("opacity", 0);
       });
   };
@@ -306,6 +316,7 @@ function App() {
         console.log(d, event);
         d3.selectAll(".rect").style("opacity", 0.7);
         d3.select(this).style("opacity", 1);
+        const tooltip = tooltipRef.current;
         tooltip
           .style("opacity", 1)
           .html(
@@ -319,12 +330,14 @@ function App() {
       })
       .on("mousemove", (event) => {
         // 移动提示
+        const tooltip = tooltipRef.current;
         tooltip
           .style("left", `${event.pageX + 5}px`)
           .style("top", `${event.pageY - 5}px`);
       })
       .on("mouseout", function () {
         d3.selectAll(".rect").style("opacity", 1);
+        const tooltip = tooltipRef.current;
         tooltip.style("opacity", 0);
       });
   };
